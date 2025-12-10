@@ -12,7 +12,6 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
-  const rectRef = useRef<DOMRect | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
@@ -47,9 +46,6 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
         ctx.lineWidth = penWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        
-        // Update cached rect
-        rectRef.current = rect;
       }
     };
 
@@ -67,11 +63,8 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return null;
 
-    // Use cached rect or get fresh one if not available
-    if (!rectRef.current) {
-      rectRef.current = canvas.getBoundingClientRect();
-    }
-    const rect = rectRef.current;
+    // Always get fresh rect to handle scroll position changes
+    const rect = canvas.getBoundingClientRect();
     
     if ('touches' in event) {
       // Touch event
