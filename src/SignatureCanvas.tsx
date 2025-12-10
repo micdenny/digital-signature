@@ -2,19 +2,17 @@ import React, { useRef, useState, useEffect } from 'react';
 import './SignatureCanvas.css';
 
 interface SignatureCanvasProps {
-  width?: number;
-  height?: number;
   penColor?: string;
   penWidth?: number;
 }
 
 const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
-  width = 800,
-  height = 400,
   penColor = '#000000',
   penWidth = 2,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const rectRef = useRef<DOMRect | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
@@ -25,19 +23,33 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctxRef.current = ctx;
+
     // Set canvas size to match display size
     const updateCanvasSize = () => {
       const container = canvas.parentElement;
       if (container) {
         const rect = container.getBoundingClientRect();
+        
+        // Save existing canvas content
+        const imageData = canvas.width > 0 ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+        
         canvas.width = rect.width;
         canvas.height = rect.height;
+        
+        // Restore canvas content after resize
+        if (imageData) {
+          ctx.putImageData(imageData, 0, 0);
+        }
         
         // Re-apply canvas styling after resize
         ctx.strokeStyle = penColor;
         ctx.lineWidth = penWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+        
+        // Update cached rect
+        rectRef.current = rect;
       }
     };
 
@@ -55,7 +67,11 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return null;
 
-    const rect = canvas.getBoundingClientRect();
+    // Use cached rect or get fresh one if not available
+    if (!rectRef.current) {
+      rectRef.current = canvas.getBoundingClientRect();
+    }
+    const rect = rectRef.current;
     
     if ('touches' in event) {
       // Touch event
@@ -82,8 +98,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const coords = getCoordinates(event);
     if (!coords) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
+    const ctx = ctxRef.current;
     if (!ctx) return;
 
     setIsDrawing(true);
@@ -102,8 +117,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const coords = getCoordinates(event);
     if (!coords) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
+    const ctx = ctxRef.current;
     if (!ctx) return;
 
     ctx.lineTo(coords.x, coords.y);
@@ -117,7 +131,7 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
 
   const clearSignature = () => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
+    const ctx = ctxRef.current;
     if (!ctx || !canvas) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
