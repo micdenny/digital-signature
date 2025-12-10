@@ -1,24 +1,24 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import SignatureCanvas from './SignatureCanvas';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+        <h1>Digital Signature</h1>
+        <p className="App-description">
+          Create your hand-drawn digital signature using your finger or stylus
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
       </header>
+      <main className="App-main">
+        <SignatureCanvas />
+      </main>
+      <footer className="App-footer">
+        <p>
+          Draw your signature in the canvas above, then save it as an image.
+        </p>
+      </footer>
     </div>
   );
 }
